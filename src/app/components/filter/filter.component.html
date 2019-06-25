@@ -1,0 +1,131 @@
+<div class="container" style="margin-top: 5rem">
+  <div class="row">
+    <!--    Group      -->
+    <div class="group row mx-3 justify-content-around" *ngFor="let group of items">
+      <div *ngFor="let item of group.conditions">
+        <div class="item-wrapper btn btn-secondary">
+          <i class="fa {{item.icon}}" aria-hidden="true"></i>
+          <span style="margin-left: 5px">{{item.fieldName}}</span>
+        </div>
+        <a class="btn btn-light mx-1" *ngIf="group.operator !== ''">
+          {{group.operator}}
+        </a>
+      </div>
+      <div class="row mx-3">
+        <!--        Add new condition        -->
+        <div class="btn-group" dropdown #dropdownCondition [insideClick]="true" *ngIf="items.length > 0">
+          <a href id="basic-link" dropdownToggle (click)="false"
+             class="btn btn-default"
+             aria-controls="basic-link-dropdown"
+             placement="top"
+             tooltip="Add filter to this group">
+            <i class="fa fa-plus" aria-hidden="true"></i>
+          </a>
+
+          <ul id="basic-link-dropdown" *dropdownMenu class="dropdown-menu"
+              role="menu" aria-labelledby="basic-link">
+            <div class="d-flex justify-content-around" *ngIf="group.operator === ''">
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="radioConditionOption" id="radioCondition1"
+                       [(ngModel)]="firstConditionGroup" value="AND" checked>
+                <label class="form-check-label" for="radioCondition1">AND</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="radioConditionOption" id="radioCondition2"
+                       [(ngModel)]="firstConditionGroup" value="OR">
+                <label class="form-check-label" for="radioCondition2">OR</label>
+              </div>
+            </div>
+
+            <input #myInput placeholder="Search people and company data" [(ngModel)]="name"
+                   (input)="filterItem(myInput.value)"
+                   class="form-control">
+            <div class="overflow">
+              <li *ngFor="let item of filteredItems; let i = index">
+                <a class="dropdown-item" href="#"
+                   (focus)="clearFocus(i)"
+                   [ngClass]="{'is-selected': item.isSelected}"
+                   (click)="assignItem(item)"
+                >{{item.fieldName}}</a>
+                <ul *ngIf="item.fieldType === 'event' && item.isSelected">
+                  <div class="form-check" *ngFor="let event of item.eventName">
+                    <input class="form-check-input" type="radio" name="eventRadio" id="eventRadio"
+                           [(ngModel)]="item.eventField"
+                           [value]="event.eventField"
+                           checked>
+                    <label class="form-check-label" for="eventRadio">
+                      {{event.name}}
+                    </label>
+                  </div>
+                </ul>
+              </li>
+            </div>
+            <li class="divider dropdown-divider"></li>
+            <span class="dropdown-item" (click)="addCondition(group)">Done</span>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a class="btn btn-secondary" *ngFor="let condition of numberOfConditionsGroup">
+      {{condition.operator | lowercase}}
+    </a>
+
+    <span class="btn btn-light ml-3">Hide filters</span>
+
+    <!--    Add filter button dropdown-->
+    <div class="btn-group" #dropdownAdd="bs-dropdown" dropdown [insideClick]="true">
+      <a href dropdownToggle (click)="false"
+         class="btn btn-default"
+         aria-controls="basic-link-dropdown">
+        <i class="fa fa-plus" aria-hidden="true"></i>
+        Add filter
+      </a>
+      <ul *dropdownMenu class="dropdown-menu"
+          role="menu" aria-labelledby="basic-link">
+        <div class="d-flex justify-content-around" *ngIf="query.groups.length > 0 && query.operator === ''">
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1"
+                   [(ngModel)]="firstCondition" value="AND">
+            <label class="form-check-label" for="inlineRadio1">AND</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2"
+                   [(ngModel)]="firstCondition" value="OR">
+            <label class="form-check-label" for="inlineRadio2">OR</label>
+          </div>
+        </div>
+        <section id="search">
+          <label for="search-input">
+            <i class="fa fa-search" aria-hidden="true"></i>
+            <span class="sr-only">Search icons</span>
+          </label>
+          <input id="search-input" #myInput placeholder="Search people and company data" [(ngModel)]="name"
+                 (input)="filterItem(myInput.value)"
+                 class="form-control input-lg">
+        </section>
+        <div class="overflow">
+          <li *ngFor="let item of filteredItems; let i = index">
+            <a class="dropdown-item" href="#"
+               (focus)="clearFocus(i)"
+               [ngClass]="{'is-selected': item.isSelected}"
+               (click)="assignItem(item)"
+            >{{item.fieldName}}</a>
+            <ul *ngIf="item.fieldType === 'event' && item.isSelected">
+              <div class="form-check" *ngFor="let event of item.eventName">
+                <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios1"
+                       [(ngModel)]="item.eventField"
+                       [value]="event.eventField"
+                       checked>
+                <label class="form-check-label" for="exampleRadios1">
+                  {{event.name}}
+                </label>
+              </div>
+            </ul>
+          </li>
+        </div>
+        <li class="divider dropdown-divider"></li>
+        <span class="dropdown-item" (click)="addFilter(); dropdownAdd.hide()">Done</span>
+      </ul>
+    </div>
+  </div>
+</div>
