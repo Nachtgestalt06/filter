@@ -1,1 +1,5 @@
-<app-filter [filter]="fields"></app-filter>
+<app-filter [filter]="fields" (query)="showQuery($event)"></app-filter>
+
+<div class="container" *ngIf="query">
+  {{query | json}}
+</div>

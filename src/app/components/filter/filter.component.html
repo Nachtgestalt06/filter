@@ -1,131 +1,324 @@
 <div class="container" style="margin-top: 5rem">
-  <div class="row">
-    <!--    Group      -->
-    <div class="group row mx-3 justify-content-around" *ngFor="let group of items">
-      <div *ngFor="let item of group.conditions">
-        <div class="item-wrapper btn btn-secondary">
-          <i class="fa {{item.icon}}" aria-hidden="true"></i>
-          <span style="margin-left: 5px">{{item.fieldName}}</span>
-        </div>
-        <a class="btn btn-light mx-1" *ngIf="group.operator !== ''">
-          {{group.operator}}
-        </a>
-      </div>
-      <div class="row mx-3">
-        <!--        Add new condition        -->
-        <div class="btn-group" dropdown #dropdownCondition [insideClick]="true" *ngIf="items.length > 0">
-          <a href id="basic-link" dropdownToggle (click)="false"
-             class="btn btn-default"
-             aria-controls="basic-link-dropdown"
-             placement="top"
-             tooltip="Add filter to this group">
-            <i class="fa fa-plus" aria-hidden="true"></i>
-          </a>
+  <form [formGroup]="form">
+    <div class="row">
+      <div class="row" formArrayName="groups" *ngIf="showFilters">
+        <div class="group flex justify-content-around"
+             *ngFor="let group of form.controls.groups.value;
+             let i = index; last as isLast; trackBy: trackByFn"
+             [formGroupName]="i">
 
-          <ul id="basic-link-dropdown" *dropdownMenu class="dropdown-menu"
-              role="menu" aria-labelledby="basic-link">
-            <div class="d-flex justify-content-around" *ngIf="group.operator === ''">
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="radioConditionOption" id="radioCondition1"
-                       [(ngModel)]="firstConditionGroup" value="AND" checked>
-                <label class="form-check-label" for="radioCondition1">AND</label>
-              </div>
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="radioConditionOption" id="radioCondition2"
-                       [(ngModel)]="firstConditionGroup" value="OR">
-                <label class="form-check-label" for="radioCondition2">OR</label>
-              </div>
-            </div>
+          <!--    Group      -->
+          <div class="btn-group flex-fill" dropdown #dropdown="bs-dropdown" [insideClick]="true"
+               id="group"
+               *ngFor="let condition of group.conditions;
+                let j = index; trackBy: trackByFn; last as isLastCondition"
+               (onShown)="onShownSelectConditionDropdown(i, j)">
+            <button href id="condition-dropdown" dropdownToggle (click)="false"
+                    class="btn btn-default"
+                    type="button"
+                    [class.btn-danger]="condition.value === ''"
+                    aria-controls="basic-link-dropdown">
+              <span class="t__h4"><i class="fa {{condition.icon}}"
+                                     aria-hidden="true"></i> {{condition.fieldName}} </span>
+              <span style="margin-left: 5px"> {{condition.operator}} {{condition.value}}</span>
+              <i class="fa fa-times hide-button" aria-hidden="true" tooltip="Remove this filter"
+                 (click)="removeCondition(i, j)"></i>
+            </button>
 
-            <input #myInput placeholder="Search people and company data" [(ngModel)]="name"
-                   (input)="filterItem(myInput.value)"
-                   class="form-control">
-            <div class="overflow">
-              <li *ngFor="let item of filteredItems; let i = index">
-                <a class="dropdown-item" href="#"
-                   (focus)="clearFocus(i)"
-                   [ngClass]="{'is-selected': item.isSelected}"
-                   (click)="assignItem(item)"
-                >{{item.fieldName}}</a>
-                <ul *ngIf="item.fieldType === 'event' && item.isSelected">
-                  <div class="form-check" *ngFor="let event of item.eventName">
-                    <input class="form-check-input" type="radio" name="eventRadio" id="eventRadio"
-                           [(ngModel)]="item.eventField"
-                           [value]="event.eventField"
-                           checked>
-                    <label class="form-check-label" for="eventRadio">
-                      {{event.name}}
+            <ul id="conditions-dropdown" *dropdownMenu class="dropdown-menu"
+                role="menu" aria-labelledby="basic-link"
+                formArrayName="conditions">
+
+              <!--          Conditions when fieldType === 'string'-->
+              <div class="overflow px-3" *ngIf="condition.fieldType === 'string'" [formGroupName]="j">
+                <div class="form-check" *ngFor="let option of options.string">
+                  <input class="form-check-input" type="radio"
+                         #radio
+                         formControlName="operator"
+                         [value]="option"
+                         (change)="setValidators(i,j, 'string')">
+                  <label class="form-check-label">
+                    {{option}}
+                  </label>
+                  <input *ngIf="radio.checked" type="text"
+                         class="form-control"
+                         [class.is-invalid]="form.invalid"
+                         formControlName="value"
+                         [focus]="focus">
+                </div>
+              </div>
+
+              <!--          FieldType === 'number'-->
+              <div class="overflow px-3" *ngIf="condition.fieldType === 'number'" [formGroupName]="j">
+                <div class="form-check" *ngFor="let option of options.number">
+                  <input class="form-check-input" type="radio"
+                         #radio
+                         formControlName="operator"
+                         [value]="option">
+                  <label class="form-check-label">
+                    {{option}}
+                  </label>
+                  <input *ngIf="radio.checked" type="number"
+                         class="form-control"
+                         [class.is-invalid]="form.invalid"
+                         [focus]="focus"
+                         formControlName="value">
+                </div>
+              </div>
+
+              <!--          FieldType === 'option'-->
+              <div class="overflow px-3" *ngIf="condition.fieldType === 'option'" [formGroupName]="j">
+                <div class="form-check" *ngFor="let option of condition.options; trackBy: trackByFn">
+                  <input class="form-check-input" type="radio"
+                         formControlName="value"
+                         [value]="option">
+                  <label class="form-check-label">
+                    {{option}}
+                  </label>
+                  <input type="hidden" formControlName="operator">
+                </div>
+              </div>
+
+              <!--          FieldType === 'boolean'-->
+              <div class="overflow px-3" *ngIf="condition.fieldType === 'boolean'" [formGroupName]="j">
+                <div class="form-check" *ngFor="let option of options.boolean">
+                  <input class="form-check-input" type="radio"
+                         formControlName="operator"
+                         [value]="option">
+                  <label class="form-check-label">
+                    {{option}}
+                  </label>
+                  <input type="hidden" formControlName="value">
+                </div>
+              </div>
+
+              <!--          FieldType === 'date'-->
+              <div class="overflow px-3" *ngIf="condition.fieldType === 'date'" [formGroupName]="j">
+                <p class="mb-0">Relative</p>
+                <div class="form-check" *ngFor="let option of options.date.relative">
+                  <input class="form-check-input" type="radio"
+                         #radio
+                         formControlName="operator"
+                         [value]="option"
+                         (change)="setValidators(i,j, 'number')">
+                  <label class="form-check-label">
+                    {{option}}
+                  </label>
+                  <input *ngIf="radio.checked" type="number"
+                         class="form-control"
+                         [class.is-invalid]="form.invalid"
+                         [focus]="focus"
+                         formControlName="value">
+                </div>
+                <p class="mb-0">Absolute</p>
+                <div class="form-check" *ngFor="let option of options.date.absolute">
+                  <input class="form-check-input" type="radio"
+                         #radio
+                         formControlName="operator"
+                         [value]="option"
+                         (change)="setValidators(i,j, 'date')">
+                  <label class="form-check-label">
+                    {{option}}
+                  </label>
+                  <input *ngIf="radio.checked" type="date"
+                         class="form-control"
+                         [focus]="focus"
+                         [class.is-invalid]="form.invalid"
+                         formControlName="value">
+                </div>
+              </div>
+
+              <!--          FieldType === 'event'-->
+              <div class="overflow px-3" *ngIf="condition.fieldType === 'event'" [formGroupName]="j">
+                <div *ngIf="condition.eventField !== 'Count'">
+                  <p class="mb-0">Relative</p>
+                  <div class="form-check" *ngFor="let option of options.date.relative">
+                    <input class="form-check-input" type="radio"
+                           #radio
+                           formControlName="operator"
+                           [value]="option"
+                           (change)="setValidators(i,j, 'number')">
+                    <label class="form-check-label">
+                      {{option}}
                     </label>
+                    <input *ngIf="radio.checked" type="number"
+                           class="form-control"
+                           [focus]="focus"
+                           [class.is-invalid]="form.invalid"
+                           formControlName="value">
                   </div>
-                </ul>
-              </li>
+                  <p class="mb-0">Absolute</p>
+                  <div class="form-check" *ngFor="let option of options.date.absolute">
+                    <input class="form-check-input" type="radio"
+                           #radio
+                           formControlName="operator"
+                           (change)="setValidators(i,j, 'date')"
+                           [value]="option">
+                    <label class="form-check-label">
+                      {{option}}
+                    </label>
+                    <input *ngIf="radio.checked" type="date"
+                           class="form-control"
+                           [focus]="focus"
+                           [class.is-invalid]="form.invalid"
+                           formControlName="value">
+                  </div>
+                </div>
+                <div *ngIf="condition.eventField === 'Count'">
+                  <div class="form-check" *ngFor="let option of options.number">
+                    <input class="form-check-input" type="radio"
+                           #radio
+                           formControlName="operator"
+                           (change)="setValidators(i,j, 'number')"
+                           [value]="option">
+                    <label class="form-check-label">
+                      {{option}}
+                    </label>
+                    <input *ngIf="radio.checked" type="number"
+                           [class.is-invalid]="form.invalid"
+                           class="form-control"
+                           [focus]="focus"
+                           formControlName="value">
+                  </div>
+                </div>
+              </div>
+              <li class="divider dropdown-divider"></li>
+              <button type="submit" [disabled]="form.invalid" class="dropdown-item"
+                      (click)="sendQuery(); dropdown.hide()">Done
+              </button>
+            </ul>
+
+            <!--      Operator Condition dropDown-->
+            <div class="btn-group flex-fill mx-1" dropdown *ngIf="!isLastCondition">
+              <button [disabled]="!form.valid" href dropdownToggle (click)="false"
+                      class="btn btn-default"
+                      type="button"
+                      aria-controls="basic-link-dropdown">
+                <span>{{group.operator}}</span>
+              </button>
+
+              <ul *dropdownMenu class="dropdown-menu"
+                  role="menu" aria-labelledby="basic-link">
+                <li *ngFor="let operator of operators">
+                  <a class="dropdown-item" href="#" (click)="group.operator = operator; sendQuery()">
+                    {{operator | lowercase}}
+                  </a>
+                </li>
+              </ul>
             </div>
-            <li class="divider dropdown-divider"></li>
-            <span class="dropdown-item" (click)="addCondition(group)">Done</span>
-          </ul>
-        </div>
-      </div>
-    </div>
-    <a class="btn btn-secondary" *ngFor="let condition of numberOfConditionsGroup">
-      {{condition.operator | lowercase}}
-    </a>
-
-    <span class="btn btn-light ml-3">Hide filters</span>
-
-    <!--    Add filter button dropdown-->
-    <div class="btn-group" #dropdownAdd="bs-dropdown" dropdown [insideClick]="true">
-      <a href dropdownToggle (click)="false"
-         class="btn btn-default"
-         aria-controls="basic-link-dropdown">
-        <i class="fa fa-plus" aria-hidden="true"></i>
-        Add filter
-      </a>
-      <ul *dropdownMenu class="dropdown-menu"
-          role="menu" aria-labelledby="basic-link">
-        <div class="d-flex justify-content-around" *ngIf="query.groups.length > 0 && query.operator === ''">
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1"
-                   [(ngModel)]="firstCondition" value="AND">
-            <label class="form-check-label" for="inlineRadio1">AND</label>
           </div>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2"
-                   [(ngModel)]="firstCondition" value="OR">
-            <label class="form-check-label" for="inlineRadio2">OR</label>
-          </div>
-        </div>
-        <section id="search">
-          <label for="search-input">
-            <i class="fa fa-search" aria-hidden="true"></i>
-            <span class="sr-only">Search icons</span>
-          </label>
-          <input id="search-input" #myInput placeholder="Search people and company data" [(ngModel)]="name"
-                 (input)="filterItem(myInput.value)"
-                 class="form-control input-lg">
-        </section>
-        <div class="overflow">
-          <li *ngFor="let item of filteredItems; let i = index">
-            <a class="dropdown-item" href="#"
-               (focus)="clearFocus(i)"
-               [ngClass]="{'is-selected': item.isSelected}"
-               (click)="assignItem(item)"
-            >{{item.fieldName}}</a>
-            <ul *ngIf="item.fieldType === 'event' && item.isSelected">
-              <div class="form-check" *ngFor="let event of item.eventName">
-                <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios1"
-                       [(ngModel)]="item.eventField"
-                       [value]="event.eventField"
-                       checked>
-                <label class="form-check-label" for="exampleRadios1">
-                  {{event.name}}
-                </label>
+
+          <!--        Add new condition        -->
+          <div class="btn-group flex-fill" dropdown #dropdownCondition="bs-dropdown" [insideClick]="true"
+               (onShown)="onShownAddConditionDropdown()"
+               *ngIf="form.controls.groups.value.length > 0">
+            <button [disabled]="!form.valid" href id="basic-link" dropdownToggle (click)="false"
+                    class="btn btn-default"
+                    type="button"
+                    aria-controls="basic-link-dropdown"
+                    placement="top"
+                    tooltip="Add filter to this group">
+              <i class="fa fa-plus" aria-hidden="true"></i>
+            </button>
+
+            <ul id="basic-link-dropdown" *dropdownMenu class="dropdown-menu"
+                role="menu" aria-labelledby="basic-link">
+              <input #myInput placeholder="Search people and company data"
+                     [(ngModel)]="searchInputModel"
+                     [ngModelOptions]="{standalone: true}"
+                     (input)="filterItem(myInput.value)"
+                     [focus]="focus"
+                     class="form-control">
+              <div class="overflow">
+
+                <li *ngFor="let item of filteredItems; let indexItem = index">
+                  <a class="dropdown-item" href="#"
+                     (focus)="clearFocus(indexItem)"
+                     [ngClass]="{'is-selected': item.isSelected}"
+                     (click)="item.fieldType !== 'event' ? addCondition(i, item) : null"
+                  >{{item.fieldName}}</a>
+                  <ul *ngIf="item.fieldType === 'event' && item.isSelected">
+                    <li class="form-check" *ngFor="let event of item.eventName">
+                      <a class="dropdown-item" href="#"
+                         (click)="addCondition(i, item, 'event', event.eventField)"
+                      >{{event.name}}</a>
+                    </li>
+                  </ul>
+                </li>
               </div>
             </ul>
-          </li>
+          </div>
+
+          <!--      Operator Group dropDown-->
+          <div class="btn-group flex-fill mx-1" dropdown *ngIf="!isLast">
+            <button href id="operator" dropdownToggle (click)="false"
+                    type="button"
+                    [disabled]="!form.valid"
+                    class="btn btn-default"
+                    aria-controls="basic-link-dropdown">
+              <span>{{form.controls.operator.value}}</span>
+            </button>
+
+            <ul id="operation-dropdown" *dropdownMenu class="dropdown-menu"
+                role="menu" aria-labelledby="basic-link">
+              <li *ngFor="let operator of operators">
+                <a class="dropdown-item" href="#" (click)="form.controls.operator.setValue(operator); sendQuery()">
+                  {{operator | lowercase}}
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
-        <li class="divider dropdown-divider"></li>
-        <span class="dropdown-item" (click)="addFilter(); dropdownAdd.hide()">Done</span>
-      </ul>
+      </div>
+
+      <!--      Hide/Show Filters button-->
+      <span class="btn btn-light ml-3" (click)="showFilters = !showFilters"
+            *ngIf="form.controls.groups.value.length > 0">{{showFilters ? 'Hide Filters' : 'Show Filters'}}</span>
+
+      <!--    Add group dropdown -->
+      <div class="btn-group" #dropdownAdd="bs-dropdown" dropdown [insideClick]="true"
+           (onShown)="onShownAddGroupDropdown()">
+        <button href dropdownToggle (click)="false"
+                type="button"
+                class="btn btn-default"
+                aria-controls="basic-link-dropdown"
+                [disabled]="!form.valid">
+          <i class="fa fa-plus" aria-hidden="true"></i>
+          Add filter
+        </button>
+        <ul *dropdownMenu class="dropdown-menu"
+            role="menu" aria-labelledby="basic-link">
+          <section id="search">
+            <label for="search-input">
+              <i class="fa fa-search" aria-hidden="true"></i>
+              <span class="sr-only">Search icons</span>
+            </label>
+            <input id="search-input" #searchInput placeholder="Search people and company data"
+                   [(ngModel)]="searchInputModel"
+                   [ngModelOptions]="{standalone: true}"
+                   [focus]="focus"
+                   (input)="filterItem(searchInput.value)"
+                   class="form-control input-lg">
+          </section>
+          <div class="overflow">
+            <li *ngFor="let item of filteredItems; let indexGroup = index">
+              <a class="dropdown-item" href="#"
+                 (focus)="clearFocus(indexGroup)"
+                 [ngClass]="{'is-selected': item.isSelected}"
+                 (click)="item.fieldType !== 'event' ? addFilter(item) : null"
+              >{{item.fieldName}}</a>
+              <ul *ngIf="item.fieldType === 'event' && item.isSelected">
+                <li class="form-check" *ngFor="let event of item.eventName">
+                  <a class="dropdown-item" href="#"
+                     (click)="addFilter(item, event.eventField)"
+                  >{{event.name}}</a>
+                </li>
+              </ul>
+            </li>
+          </div>
+        </ul>
+      </div>
     </div>
-  </div>
+
+  </form>
 </div>

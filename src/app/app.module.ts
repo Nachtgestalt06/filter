@@ -5,22 +5,24 @@ import { AppComponent } from './app.component';
 import { FilterComponent } from './components/filter/filter.component';
 import {BsDropdownModule, TooltipModule} from 'ngx-bootstrap';
 import {CommonModule} from '@angular/common';
-import {FormsModule} from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import { TypeaheadModule } from 'ngx-bootstrap/typeahead';
+import { FocusDirective } from './focus.directive';
 
 @NgModule({
   declarations: [
     AppComponent,
     FilterComponent,
+    FocusDirective
   ],
   imports: [
     BrowserModule,
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     BsDropdownModule.forRoot(),
     TooltipModule.forRoot(),
     TypeaheadModule.forRoot(),
-
   ],
   providers: [],
   bootstrap: [AppComponent]

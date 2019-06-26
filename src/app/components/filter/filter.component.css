@@ -44,8 +44,10 @@ label {
 }
 
 .overflow {
+  display: flex;
+  flex-direction: column;
   width: 250px;
-  height: 200px;
+  height: 300px;
   max-height: 450px;
   overflow: auto;
 }
@@ -53,4 +55,25 @@ label {
 .is-selected {
   /*background-color: blue;*/
   color: blue;
+}
+
+.form-check {
+  position: relative;
+  display: flex;
+  padding-left: 1.25rem;
+  flex-direction: column;
+}
+
+.t__h4 {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.hide-button {
+  display: none;
+  cursor: pointer;
+}
+
+#group:hover .hide-button {
+  display: inline-block;
 }

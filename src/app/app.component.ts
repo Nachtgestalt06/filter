@@ -7,6 +7,7 @@ import {Component} from '@angular/core';
 })
 export class AppComponent {
   title = 'filter';
+  query;
   fields = [
     {name: 'name', fieldName: 'Name', fieldType: 'string'},
     {
@@ -19,4 +20,8 @@ export class AppComponent {
     {name: 'onLogin', fieldName: 'onLogin', fieldType: 'event'},
     {name: 'onLogon', fieldName: 'onLogon', fieldType: 'event'},
   ];
+
+  showQuery(query) {
+    this.query = query;
+  }
 }
